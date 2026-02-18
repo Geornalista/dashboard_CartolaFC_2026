@@ -206,7 +206,13 @@ select,input{
 <body>
 
 <header class="header">
-  <h1>Análise até a Rodada <span id="rodada-atual">...</span></h1>
+  <h1>Análise: Rodada <span id="rodada-atual">...</span></h1>
+  <div id="status-mercado-container" style="color: #fff; font-size: 0.85rem; margin-top: 8px;">
+    Status: <span id="status-texto">Carregando...</span>
+    <div id="fechamento-container" style="display: none; margin-top: 4px; opacity: 0.9;">
+      Fecha em: <span id="data-fechamento">--/-- às --:--</span>
+    </div>
+  </div>
 </header>
 
 <div class="container">
