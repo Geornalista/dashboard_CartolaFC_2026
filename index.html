@@ -6,33 +6,40 @@
 
 <title>Cartola FC — Análise Tática</title>
 
-<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f172a">
 
-<!-- Fonte moderna -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
+
+/* =========================
+   TEMAS
+========================= */
+
 :root{
   --primary:#22c55e;
   --primary-dark:#16a34a;
+
+  --bg:#0b1220;
+  --card:#111827;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --border:#1f2937;
+
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+
+body.light{
   --bg:#f1f5f9;
   --card:#ffffff;
   --text:#0f172a;
   --muted:#64748b;
   --border:#e2e8f0;
+  --shadow:0 10px 25px rgba(0,0,0,.08);
 }
 
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#020617;
-    --card:#0f172a;
-    --text:#e2e8f0;
-    --muted:#94a3b8;
-    --border:#1e293b;
-  }
-}
+/* ========================= */
 
 *{box-sizing:border-box}
 
@@ -43,82 +50,114 @@ body{
   color:var(--text);
 }
 
-/* HEADER */
+/* =========================
+   HEADER
+========================= */
 
 .header{
   position:sticky;
   top:0;
-  backdrop-filter: blur(10px);
-  background:rgba(15,23,42,.8);
-  padding:18px;
-  text-align:center;
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+  padding:14px 16px;
   z-index:10;
+}
+
+.header-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:6px;
 }
 
 .header h1{
   margin:0;
-  font-size:1.2rem;
-  color:#fff;
+  font-size:1.1rem;
+  font-weight:800;
 }
 
-/* CONTAINER */
+.theme-btn{
+  border:none;
+  background:var(--bg);
+  color:var(--text);
+  padding:6px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:.85rem;
+  border:1px solid var(--border);
+}
+
+#status-mercado-container{
+  font-size:.8rem;
+  color:var(--muted);
+}
+
+/* =========================
+   CONTAINER
+========================= */
 
 .container{
-  max-width:900px;
+  max-width:760px;
   margin:auto;
-  padding:20px 16px 40px;
+  padding:18px 14px 50px;
 }
 
-/* TABS */
+/* =========================
+   TABS (estilo app esportivo)
+========================= */
 
 .tabs{
   display:flex;
-  gap:10px;
-  margin:18px 0 22px;
+  gap:8px;
+  margin:16px 0 22px;
 }
 
 .tabs button{
   flex:1;
   border:none;
   background:var(--card);
+  border:1px solid var(--border);
   padding:12px;
-  border-radius:999px;
-  font-weight:600;
+  border-radius:12px;
+  font-weight:700;
   color:var(--muted);
   cursor:pointer;
-  transition:.25s;
-  box-shadow:0 2px 6px rgba(0,0,0,.05);
+  transition:.2s;
 }
 
 .tabs button.active{
   background:var(--primary);
-  color:#fff;
-  box-shadow:0 6px 16px rgba(34,197,94,.35);
+  color:#022c22;
+  border-color:var(--primary);
+  box-shadow:0 8px 18px rgba(34,197,94,.35);
 }
 
-/* FILTROS */
+/* =========================
+   FILTROS
+========================= */
 
 .filtros{
   background:var(--card);
-  border-radius:16px;
-  padding:18px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px;
   display:flex;
   flex-wrap:wrap;
-  gap:14px 18px;
+  gap:12px 16px;
   margin-bottom:22px;
-  box-shadow:0 6px 18px rgba(0,0,0,.06);
+  box-shadow:var(--shadow);
 }
 
 .filtro-grupo{
   display:flex;
   align-items:center;
   gap:6px;
-  font-size:.85rem;
+  font-size:.82rem;
   color:var(--muted);
 }
 
-select,input{
-  padding:8px 10px;
+select{
+  padding:7px 10px;
   border-radius:8px;
   border:1px solid var(--border);
   background:var(--bg);
@@ -126,45 +165,57 @@ select,input{
   font-weight:500;
 }
 
-/* LISTA */
+input[type="radio"]{
+  accent-color:var(--primary);
+}
+
+/* =========================
+   LISTA (ULTRA PREMIUM)
+========================= */
 
 .lista-container{
   display:flex;
   flex-direction:column;
-  gap:14px;
+  gap:12px;
 }
 
 .item-lista{
   display:flex;
   align-items:center;
-  gap:16px;
+  gap:14px;
   background:var(--card);
+  border:1px solid var(--border);
   padding:14px 16px;
-  border-radius:18px;
-  box-shadow:0 8px 20px rgba(0,0,0,.06);
+  border-radius:14px;
+  box-shadow:var(--shadow);
   transition:.2s;
 }
 
 .item-lista:hover{
   transform:translateY(-2px);
-  box-shadow:0 12px 26px rgba(0,0,0,.1);
 }
 
 .item-lista img{
-  width:56px;
-  height:56px;
+  width:54px;
+  height:54px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#000;
 }
 
 .info h3{
   margin:0;
-  font-size:1rem;
+  font-size:.96rem;
+  font-weight:700;
 }
 
 .info p{
-  margin:2px 0 0;
-  font-size:.8rem;
+  margin:3px 0 0;
+  font-size:.76rem;
   color:var(--muted);
 }
+
+/* Métrica estilo ranking esportivo */
 
 .metrica{
   margin-left:auto;
@@ -172,21 +223,25 @@ select,input{
 }
 
 .metrica-label{
-  font-size:.7rem;
+  font-size:.65rem;
   color:var(--muted);
-  font-weight:600;
+  font-weight:700;
+  letter-spacing:.4px;
 }
 
 .metrica-valor{
-  font-size:1.6rem;
-  font-weight:700;
+  font-size:1.9rem;
+  font-weight:900;
   color:var(--primary);
+  line-height:1;
 }
 
 .metrica-subtext{
-  font-size:.7rem;
+  font-size:.65rem;
   color:var(--muted);
 }
+
+/* ========================= */
 
 #loading-status{
   text-align:center;
@@ -194,8 +249,6 @@ select,input{
   font-weight:600;
   color:var(--muted);
 }
-
-/* Conteúdo */
 
 .content>div{display:none}
 .content>div.active{display:block}
@@ -206,13 +259,23 @@ select,input{
 <body>
 
 <header class="header">
-  <h1>Análise: Rodada <span id="rodada-atual">...</span></h1>
-  <div id="status-mercado-container" style="color: #fff; font-size: 0.85rem; margin-top: 8px;">
+
+  <div class="header-top">
+    <h1>Análise: Rodada <span id="rodada-atual">...</span></h1>
+
+    <button class="theme-btn" id="theme-toggle">
+      🌙 Tema
+    </button>
+  </div>
+
+  <div id="status-mercado-container">
     Status: <span id="status-texto">Carregando...</span>
-    <div id="fechamento-container" style="display: none; margin-top: 4px; opacity: 0.9;">
+
+    <div id="fechamento-container" style="display:none">
       Fecha em: <span id="data-fechamento">--/-- às --:--</span>
     </div>
   </div>
+
 </header>
 
 <div class="container">
@@ -317,9 +380,37 @@ select,input{
 <script src="app.js"></script>
 
 <script>
+
+/* =========================
+   TEMA MANUAL
+========================= */
+
+const btn = document.getElementById("theme-toggle")
+const savedTheme = localStorage.getItem("theme")
+
+if(savedTheme === "light"){
+  document.body.classList.add("light")
+  btn.textContent = "☀️ Tema"
+}
+
+btn.onclick = () => {
+  document.body.classList.toggle("light")
+
+  if(document.body.classList.contains("light")){
+    localStorage.setItem("theme","light")
+    btn.textContent = "☀️ Tema"
+  }else{
+    localStorage.setItem("theme","dark")
+    btn.textContent = "🌙 Tema"
+  }
+}
+
+/* ========================= */
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js');
 }
+
 </script>
 
 </body>
