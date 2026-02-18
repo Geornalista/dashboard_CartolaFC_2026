@@ -1,4 +1,4 @@
-const CACHE_NAME = "cartola-tatica-v1";
+const CACHE_NAME = "cartola-tatica-v2";
 
 const ASSETS = [
   "/",
