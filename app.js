@@ -1,13 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURAÇÕES E DADOS ---
-    const ULTIMA_RODADA = 3;
+    let ULTIMA_RODADA = 0; // Será atualizado automaticamente pela API
     const proxyUrl = 'https://corsproxy.io/?'; // Proxy para resolver o problema de CORS
     const API_URLS = {
+        STATUS: 'https://api.cartola.globo.com/mercado/status',
         PONTUADOS: 'https://api.cartola.globo.com/atletas/pontuados/',
         PARTIDAS: 'https://api.cartola.globo.com/partidas/',
         CLUBES: 'https://api.cartola.globo.com/clubes'
     };
+
     const SCOUTS_DESCRICOES = { 'A': 'Assistência', 'CA': 'Cartão Amarelo', 'CV': 'Cartão Vermelho', 'DE': 'Defesa', 'DP': 'Defesa de Pênalti', 'DS': 'Desarme', 'FC': 'Falta Cometida', 'FD': 'Finalização Defendida', 'FF': 'Finalização pra Fora', 'FS': 'Falta Sofrida', 'FT': 'Finalização na Trave', 'G': 'Gol', 'GC': 'Gol Contra', 'GS': 'Gol Sofrido', 'I': 'Impedimento', 'PC': 'Pênalti Cometido', 'PP': 'Pênalti Perdido', 'PS': 'Pênalti Sofrido', 'SG': 'Jogo sem Sofrer Gol', 'V': 'Vitórias' };
+
+    // Array de meses para formatação
+    const MESES_ABREV = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
 
     // --- ELEMENTOS DO DOM E DADOS ---
     const loadingStatus = document.getElementById('loading-status'), tabJogadores = document.getElementById('tab-jogadores'), tabClubes = document.getElementById('tab-clubes'), contentJogadores = document.getElementById('content-jogadores'), contentClubes = document.getElementById('content-clubes'), atletasContainer = document.getElementById('atletas-container'), clubesContainer = document.getElementById('clubes-container');
@@ -28,10 +33,77 @@ document.addEventListener('DOMContentLoaded', () => {
         contentClubes.classList.toggle('active', !isJogadores);
         applyFilters();
     }
+
+    // --- NOVA FUNÇÃO: LÊ O STATUS DO MERCADO E RODADA ---
+    async function carregarStatusMercado() {
+        try {
+            const res = await fetch(`${proxyUrl}${API_URLS.STATUS}`);
+            if (!res.ok) throw new Error('Falha ao obter status');
+            const data = await res.json();
+
+            // 1. Definir Rodada
+            // Se mercado aberto (status 1), a rodada_atual na API é a próxima. Pegamos dados até a anterior.
+            // Se mercado fechado (status 2), a rodada está acontecendo, tentamos pegar dados dela.
+            if (data.status_mercado === 1) {
+                ULTIMA_RODADA = data.rodada_atual - 1;
+            } else {
+                ULTIMA_RODADA = data.rodada_atual;
+            }
+            
+            // Atualiza rodada no Header
+            document.getElementById('rodada-atual').textContent = ULTIMA_RODADA > 0 ? ULTIMA_RODADA : '-';
+
+            // 2. Definir Status Visual
+            const elStatus = document.getElementById('status-texto');
+            const elContainerFecha = document.getElementById('fechamento-container');
+            const elDataFecha = document.getElementById('data-fechamento');
+
+            if (data.status_mercado === 1) {
+                // Aberto
+                elStatus.textContent = 'Aberto';
+                elStatus.style.color = '#22c55e'; // Verde
+                elStatus.style.fontWeight = 'bold';
+                
+                if (data.fechamento) {
+                    const f = data.fechamento;
+                    // Formata minuto para ter dois dígitos (ex: 05)
+                    const min = f.minuto < 10 ? `0${f.minuto}` : f.minuto;
+                    // Busca a abreviação do mês (mes - 1 pois o array começa em 0)
+                    const mesAbrev = MESES_ABREV[f.mes - 1] || f.mes;
+                    
+                    elDataFecha.textContent = `${f.dia}/${mesAbrev} às ${f.hora}:${min}`;
+                    elContainerFecha.style.display = 'block';
+                }
+            } else {
+                // Fechado
+                elStatus.textContent = 'Fechado';
+                elStatus.style.color = '#ef4444'; // Vermelho
+                elStatus.style.fontWeight = 'bold';
+                elContainerFecha.style.display = 'none';
+            }
+
+        } catch (error) {
+            console.error('Erro ao verificar status:', error);
+            loadingStatus.textContent = 'Erro ao conectar com API do Cartola.';
+            // Fallback: define uma rodada padrão segura caso falhe
+            ULTIMA_RODADA = 1; 
+        }
+    }
+
     async function fetchAndAggregateData() {
-        document.getElementById('rodada-atual').textContent = ULTIMA_RODADA;
+        loadingStatus.textContent = 'Verificando status do mercado...';
+        
+        // Espera a verificação do mercado para saber qual é a ULTIMA_RODADA
+        await carregarStatusMercado();
+
+        if (ULTIMA_RODADA < 1) {
+            loadingStatus.textContent = 'O campeonato ainda não começou ou não há dados de rodadas anteriores.';
+            return;
+        }
+
         loadingStatus.textContent = 'Carregando lista de clubes...';
         await fetch(`${proxyUrl}${API_URLS.CLUBES}`).then(res => res.json()).then(data => todosClubes = data);
+        
         for (let r = 1; r <= ULTIMA_RODADA; r++) {
             loadingStatus.textContent = `Rodada ${r}/${ULTIMA_RODADA}: Processando...`;
             try {
