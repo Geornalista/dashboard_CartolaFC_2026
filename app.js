@@ -93,16 +93,32 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchAndAggregateData() {
         loadingStatus.textContent = 'Verificando status do mercado...';
         
-        // Espera a verificação do mercado para saber qual é a ULTIMA_RODADA
+        // Espera a verificação do mercado
         await carregarStatusMercado();
-
+    
+        // Se houve erro na primeira função, ULTIMA_RODADA virou 1. 
+        // Vamos garantir que se houver erro grave, não avancemos às cegas.
+        if (loadingStatus.textContent === 'Erro ao conectar com API do Cartola.') {
+            return; // Interrompe se a primeira API já falhou completamente
+        }
+    
         if (ULTIMA_RODADA < 1) {
             loadingStatus.textContent = 'O campeonato ainda não começou ou não há dados de rodadas anteriores.';
             return;
         }
-
+    
         loadingStatus.textContent = 'Carregando lista de clubes...';
-        await fetch(`${proxyUrl}${API_URLS.CLUBES}`).then(res => res.json()).then(data => todosClubes = data);
+        
+        // NOVO: Bloco Try/Catch para proteger a requisição dos clubes
+        try {
+            const resClubes = await fetch(`${proxyUrl}${API_URLS.CLUBES}`);
+            if (!resClubes.ok) throw new Error(`Erro na API de Clubes: Status ${resClubes.status}`);
+            todosClubes = await resClubes.json();
+        } catch (error) {
+            console.error('Falha ao obter clubes:', error);
+            loadingStatus.textContent = 'Erro ao carregar a lista de clubes. O proxy CORS pode estar bloqueado.';
+            return; // Interrompe a execução para não travar o app mais adiante
+        }
         
         for (let r = 1; r <= ULTIMA_RODADA; r++) {
             loadingStatus.textContent = `Rodada ${r}/${ULTIMA_RODADA}: Processando...`;
@@ -111,11 +127,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     fetch(`${proxyUrl}${API_URLS.PARTIDAS}${r}`), 
                     fetch(`${proxyUrl}${API_URLS.PONTUADOS}${r}`)
                 ]);
-                if (!p.ok || !s.ok) continue;
+                
+                // Verifica se as respostas foram bem-sucedidas
+                if (!p.ok || !s.ok) {
+                    console.warn(`Dados incompletos para a rodada ${r}. Ignorando...`);
+                    continue; 
+                }
+                
                 const [partidasData, scoutData] = await Promise.all([p.json(), s.json()]);
                 processaDadosDaRodada(scoutData, partidasData.partidas);
-            } catch (error) { console.error(`Erro na rodada ${r}:`, error); }
+            } catch (error) { 
+                console.error(`Erro na requisição da rodada ${r}:`, error); 
+            }
         }
+        
         loadingStatus.style.display = 'none';
         populateFilters();
         switchTab('jogadores');
