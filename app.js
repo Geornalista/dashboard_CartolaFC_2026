@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURAÇÕES E DADOS ---
     let ULTIMA_RODADA = 0; // Será atualizado automaticamente pela API
-    // const proxyUrl = 'https://corsproxy.io/?'; // Proxy para resolver o problema de CORS
-    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+    const proxyUrl = 'https://meu-proxy-cartola.onrender.com/?';
     const API_URLS = {
         STATUS: 'https://api.cartola.globo.com/mercado/status',
         PONTUADOS: 'https://api.cartola.globo.com/atletas/pontuados/',
