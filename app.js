@@ -1,30 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURAÇÕES E DADOS ---
-    let ULTIMA_RODADA = 0; // Será atualizado automaticamente pela API
-    const proxyUrl = 'https://meu-proxy-cartola.onrender.com/?';
-    const API_URLS = {
-        STATUS: 'https://api.cartola.globo.com/mercado/status',
-        PONTUADOS: 'https://api.cartola.globo.com/atletas/pontuados/',
-        PARTIDAS: 'https://api.cartola.globo.com/partidas/',
-        CLUBES: 'https://api.cartola.globo.com/clubes'
-    };
-
+    let ULTIMA_RODADA = 0; 
     const SCOUTS_DESCRICOES = { 'A': 'Assistência', 'CA': 'Cartão Amarelo', 'CV': 'Cartão Vermelho', 'DE': 'Defesa', 'DP': 'Defesa de Pênalti', 'DS': 'Desarme', 'FC': 'Falta Cometida', 'FD': 'Finalização Defendida', 'FF': 'Finalização pra Fora', 'FS': 'Falta Sofrida', 'FT': 'Finalização na Trave', 'G': 'Gol', 'GC': 'Gol Contra', 'GS': 'Gol Sofrido', 'I': 'Impedimento', 'PC': 'Pênalti Cometido', 'PP': 'Pênalti Perdido', 'PS': 'Pênalti Sofrido', 'SG': 'Jogo sem Sofrer Gol', 'V': 'Vitórias' };
-
-    // Array de meses para formatação
     const MESES_ABREV = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
 
     // --- ELEMENTOS DO DOM E DADOS ---
     const loadingStatus = document.getElementById('loading-status'), tabJogadores = document.getElementById('tab-jogadores'), tabClubes = document.getElementById('tab-clubes'), contentJogadores = document.getElementById('content-jogadores'), contentClubes = document.getElementById('content-clubes'), atletasContainer = document.getElementById('atletas-container'), clubesContainer = document.getElementById('clubes-container');
     let dadosAgregados = {}, dadosClubesAgregados = {}, todosClubes = {}, todasPosicoes = {}, clubesParticipantes = new Set();
+    
     const createNewAthleteEntry = (info) => ({ ...info, pontuacao: { total: 0, mandante: 0, visitante: 0 }, jogos: { total: 0, mandante: 0, visitante: 0 }, scouts: { total: {}, mandante: {}, visitante: {} } });
     const createNewClubEntry = (info) => ({ ...info, pontuacao: { total: 0, mandante: 0, visitante: 0 }, jogos: { total: 0, mandante: 0, visitante: 0 }, scouts: { total: {}, mandante: {}, visitante: {} } });
 
-    // --- LÓGICA DE INTERFACE E BUSCA DE DADOS ---
+    // --- LÓGICA DE INTERFACE ---
     function setupTabs() {
         tabJogadores.addEventListener('click', () => switchTab('jogadores'));
         tabClubes.addEventListener('click', () => switchTab('clubes'));
     }
+    
     function switchTab(activeTab) {
         const isJogadores = activeTab === 'jogadores';
         tabJogadores.classList.toggle('active', isJogadores);
@@ -34,120 +26,74 @@ document.addEventListener('DOMContentLoaded', () => {
         applyFilters();
     }
 
-    // --- NOVA FUNÇÃO: LÊ O STATUS DO MERCADO E RODADA ---
-    async function carregarStatusMercado() {
+    // --- LÓGICA NOVA: CARREGAR O JSON PRONTO ---
+    async function carregarBancoDeDados() {
+        loadingStatus.textContent = 'Carregando dados da nuvem...';
+        
         try {
-            const res = await fetch(`${proxyUrl}${API_URLS.STATUS}`);
-            if (!res.ok) throw new Error('Falha ao obter status');
-            const data = await res.json();
-
-            // 1. Definir Rodada
-            // Se mercado aberto (status 1), a rodada_atual na API é a próxima. Pegamos dados até a anterior.
-            // Se mercado fechado (status 2), a rodada está acontecendo, tentamos pegar dados dela.
-            if (data.status_mercado === 1) {
-                ULTIMA_RODADA = data.rodada_atual - 1;
-            } else {
-                ULTIMA_RODADA = data.rodada_atual;
-            }
+            // Adiciona um timestamp na URL para o celular não usar versão velha do arquivo salvo na memória (cache)
+            const res = await fetch(`dados_cartola.json?t=${new Date().getTime()}`);
+            if (!res.ok) throw new Error('Arquivo de dados não encontrado.');
             
-            // Atualiza rodada no Header
-            document.getElementById('rodada-atual').textContent = ULTIMA_RODADA > 0 ? ULTIMA_RODADA : '-';
-
-            // 2. Definir Status Visual
-            const elStatus = document.getElementById('status-texto');
-            const elContainerFecha = document.getElementById('fechamento-container');
-            const elDataFecha = document.getElementById('data-fechamento');
-
-            if (data.status_mercado === 1) {
-                // Aberto
-                elStatus.textContent = 'Aberto';
-                elStatus.style.color = '#22c55e'; // Verde
-                elStatus.style.fontWeight = 'bold';
-                
-                if (data.fechamento) {
-                    const f = data.fechamento;
-                    // Formata minuto para ter dois dígitos (ex: 05)
-                    const min = f.minuto < 10 ? `0${f.minuto}` : f.minuto;
-                    // Busca a abreviação do mês (mes - 1 pois o array começa em 0)
-                    const mesAbrev = MESES_ABREV[f.mes - 1] || f.mes;
-                    
-                    elDataFecha.textContent = `${f.dia}/${mesAbrev} às ${f.hora}:${min}`;
-                    elContainerFecha.style.display = 'block';
-                }
-            } else {
-                // Fechado
-                elStatus.textContent = 'Fechado';
-                elStatus.style.color = '#ef4444'; // Vermelho
-                elStatus.style.fontWeight = 'bold';
-                elContainerFecha.style.display = 'none';
+            const db = await res.json();
+            
+            // 1. Atualizar Tela de Status
+            atualizarStatusNaTela(db.status);
+            
+            // 2. Extrair dados
+            todosClubes = db.clubes;
+            
+            if (db.rodadas.length === 0) {
+                loadingStatus.textContent = 'O campeonato ainda não começou.';
+                return;
             }
+
+            // 3. Processar cada rodada que já veio compilada
+            db.rodadas.forEach(rodada => {
+                processaDadosDaRodada(rodada.scout, rodada.partidas);
+            });
+
+            loadingStatus.style.display = 'none';
+            populateFilters();
+            switchTab('jogadores');
 
         } catch (error) {
-            console.error('Erro ao verificar status:', error);
-            loadingStatus.textContent = 'Erro ao conectar com API do Cartola.';
-            // Fallback: define uma rodada padrão segura caso falhe
-            ULTIMA_RODADA = 1; 
+            console.error('Erro:', error);
+            loadingStatus.textContent = 'Aguardando primeira atualização do banco de dados...';
         }
     }
 
-    async function fetchAndAggregateData() {
-        loadingStatus.textContent = 'Verificando status do mercado...';
+    function atualizarStatusNaTela(statusData) {
+        const elStatus = document.getElementById('status-texto');
+        const elContainerFecha = document.getElementById('fechamento-container');
+        const elDataFecha = document.getElementById('data-fechamento');
         
-        // Espera a verificação do mercado
-        await carregarStatusMercado();
-    
-        // Se houve erro na primeira função, ULTIMA_RODADA virou 1. 
-        // Vamos garantir que se houver erro grave, não avancemos às cegas.
-        if (loadingStatus.textContent === 'Erro ao conectar com API do Cartola.') {
-            return; // Interrompe se a primeira API já falhou completamente
-        }
-    
-        if (ULTIMA_RODADA < 1) {
-            loadingStatus.textContent = 'O campeonato ainda não começou ou não há dados de rodadas anteriores.';
-            return;
-        }
-    
-        loadingStatus.textContent = 'Carregando lista de clubes...';
+        let rodada = statusData.rodada_atual || 0;
+        if (statusData.status_mercado === 1) rodada -= 1;
         
-        // NOVO: Bloco Try/Catch para proteger a requisição dos clubes
-        try {
-            const resClubes = await fetch(`${proxyUrl}${API_URLS.CLUBES}`);
-            if (!resClubes.ok) throw new Error(`Erro na API de Clubes: Status ${resClubes.status}`);
-            todosClubes = await resClubes.json();
-        } catch (error) {
-            console.error('Falha ao obter clubes:', error);
-            loadingStatus.textContent = 'Erro ao carregar a lista de clubes. O proxy CORS pode estar bloqueado.';
-            return; // Interrompe a execução para não travar o app mais adiante
-        }
-        
-        for (let r = 1; r <= ULTIMA_RODADA; r++) {
-            loadingStatus.textContent = `Rodada ${r}/${ULTIMA_RODADA}: Processando...`;
-            try {
-                const [p, s] = await Promise.all([
-                    fetch(`${proxyUrl}${API_URLS.PARTIDAS}${r}`), 
-                    fetch(`${proxyUrl}${API_URLS.PONTUADOS}${r}`)
-                ]);
-                
-                // Verifica se as respostas foram bem-sucedidas
-                if (!p.ok || !s.ok) {
-                    console.warn(`Dados incompletos para a rodada ${r}. Ignorando...`);
-                    continue; 
-                }
-                
-                const [partidasData, scoutData] = await Promise.all([p.json(), s.json()]);
-                processaDadosDaRodada(scoutData, partidasData.partidas);
-            } catch (error) { 
-                console.error(`Erro na requisição da rodada ${r}:`, error); 
+        document.getElementById('rodada-atual').textContent = rodada > 0 ? rodada : '-';
+
+        if (statusData.status_mercado === 1) {
+            elStatus.textContent = 'Aberto';
+            elStatus.style.color = '#22c55e';
+            elStatus.style.fontWeight = 'bold';
+            if (statusData.fechamento) {
+                const f = statusData.fechamento;
+                const min = f.minuto < 10 ? `0${f.minuto}` : f.minuto;
+                const mesAbrev = MESES_ABREV[f.mes - 1] || f.mes;
+                elDataFecha.textContent = `${f.dia}/${mesAbrev} às ${f.hora}:${min}`;
+                elContainerFecha.style.display = 'block';
             }
+        } else {
+            elStatus.textContent = 'Fechado';
+            elStatus.style.color = '#ef4444';
+            elStatus.style.fontWeight = 'bold';
+            elContainerFecha.style.display = 'none';
         }
-        
-        loadingStatus.style.display = 'none';
-        populateFilters();
-        switchTab('jogadores');
     }
 
     function processaDadosDaRodada(scoutData, partidas) {
-        if (!scoutData.atletas || Object.keys(scoutData.atletas).length === 0) { return; }
+        if (!scoutData || !scoutData.atletas || Object.keys(scoutData.atletas).length === 0) return;
         if (scoutData.posicoes) todasPosicoes = scoutData.posicoes;
 
         const localMapa = {};
@@ -200,6 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function populateFilters() {
         const fClubeJogadores = document.getElementById('filtro-clube-jogadores'), fPosJogadores = document.getElementById('filtro-posicao-jogadores'), fScoutJogadores = document.getElementById('filtro-scout-jogadores'), fScoutClubes = document.getElementById('filtro-scout-clubes');
+        
+        // Evita duplicar opções se rodar duas vezes
+        if(fClubeJogadores.options.length > 1) return;
+
         Array.from(clubesParticipantes).map(id => todosClubes[id]).filter(Boolean).sort((a, b) => a.nome_fantasia.localeCompare(b.nome_fantasia)).forEach(c => fClubeJogadores.innerHTML += `<option value="${c.id}">${c.nome_fantasia}</option>`);
         Object.values(todasPosicoes).forEach(p => fPosJogadores.innerHTML += `<option value="${p.id}">${p.nome}</option>`);
         const scoutOptions = Object.entries(SCOUTS_DESCRICOES).sort((a, b) => a[1].localeCompare(b[1])).map(([sigla, desc]) => `<option value="${sigla}">${desc}</option>`).join('');
@@ -259,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let subtexto = viewMode === 'media' ? `Média em ${jogos} jogos` : `Total em ${jogos} jogos`;
             if (local !== 'todos') subtexto += ` (${local})`;
             const itemDiv = document.createElement('div'); itemDiv.className = 'item-lista';
-            itemDiv.innerHTML = `<img src="${atleta.foto ? atleta.foto.replace('FORMATO', '140x140') : ''}" alt="Foto de ${atleta.apelido}" style="border-radius:50%"><div class="info"><h3>${atleta.apelido}</h3><p>${todosClubes[atleta.clube_id]?.nome_fantasia || ''} • ${todasPosicoes[atleta.posicao_id]?.nome || ''}</p></div><div class="metrica"><span class="metrica-label">${rotulo}</span><span class="metrica-valor">${valorDisplay}</span><span class="metrica-subtext">${subtexto}</span></div>`;
+            itemDiv.innerHTML = `<img src="${atleta.foto ? atleta.foto.replace('FORMATO', '140x140') : ''}" alt="Foto" style="border-radius:50%"><div class="info"><h3>${atleta.apelido}</h3><p>${todosClubes[atleta.clube_id]?.nome_fantasia || ''} • ${todasPosicoes[atleta.posicao_id]?.nome || ''}</p></div><div class="metrica"><span class="metrica-label">${rotulo}</span><span class="metrica-valor">${valorDisplay}</span><span class="metrica-subtext">${subtexto}</span></div>`;
             atletasContainer.appendChild(itemDiv);
         }
     }
@@ -280,7 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item-lista';
-            // A anotação de jogos (subtexto) foi removida do HTML gerado
             itemDiv.innerHTML = `<img src="${clube.escudos['60x60']}" alt="Escudo do ${clube.nome_fantasia}"><div class="info"><h3>${clube.nome_fantasia}</h3><p>${clube.abreviacao}</p></div><div class="metrica"><span class="metrica-label">${rotulo}</span><span class="metrica-valor">${valorDisplay}</span></div>`;
             clubesContainer.appendChild(itemDiv);
         }
@@ -290,5 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const allFilterElements = document.querySelectorAll('.filtros select, .filtros input');
     allFilterElements.forEach(el => el.addEventListener('change', applyFilters));
     setupTabs();
-    fetchAndAggregateData();
+    
+    // Inicia baixando o JSON estático super rápido
+    carregarBancoDeDados();
 });
