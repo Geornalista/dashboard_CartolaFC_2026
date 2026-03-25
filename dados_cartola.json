@@ -1,5 +1,5 @@
 {
-  "atualizado_em": "2026-03-25T13:24:20.601130",
+  "atualizado_em": "2026-03-25T19:03:53.184760",
   "status": {
     "rodada_atual": 9,
     "status_mercado": 1,
@@ -29,7 +29,7 @@
       "timestamp": 1775082540
     },
     "limites_competicao": {},
-    "times_escalados": 187512,
+    "times_escalados": 197944,
     "mercado_pos_rodada": true,
     "novo_mes_ranking": true,
     "degustacao_gatomestre": false,
@@ -18715,8 +18715,8 @@
             "v"
           ],
           "transmissao": {
-            "label": "",
-            "url": ""
+            "label": "fique por dentro",
+            "url": "https://ge.globo.com/pr/futebol/brasileirao-serie-a/jogo/29-03-2026/atletico-pr-botafogo.ghtml?utm_source=cartolafc"
           },
           "local": "Arena da Baixada",
           "status_transmissao_tr": "",
