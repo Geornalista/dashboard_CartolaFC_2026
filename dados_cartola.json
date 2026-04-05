@@ -1,5 +1,5 @@
 {
-  "atualizado_em": "2026-04-05T13:10:30.843181",
+  "atualizado_em": "2026-04-05T18:54:11.609802",
   "status": {
     "rodada_atual": 10,
     "status_mercado": 2,
@@ -41885,15 +41885,15 @@
             "e"
           ],
           "transmissao": {
-            "label": "fique por dentro",
+            "label": "ao vivo",
             "url": "https://ge.globo.com/sc/futebol/brasileirao-serie-a/jogo/05-04-2026/chapecoense-vitoria.ghtml?utm_source=cartolafc"
           },
           "local": "Arena Condá",
-          "status_transmissao_tr": "CRIADA",
+          "status_transmissao_tr": "EM_ANDAMENTO",
           "status_cronometro_tr": "PAUSADO",
-          "periodo_tr": "",
+          "periodo_tr": "PRE_JOGO",
           "partida_data": "2026-04-05 16:00:00",
-          "inicio_cronometro_tr": "",
+          "inicio_cronometro_tr": "2026-04-05T17:47:33.721Z",
           "placar_oficial_visitante": null,
           "placar_oficial_mandante": null,
           "partida_id": 346614,
