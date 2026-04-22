@@ -1,5 +1,5 @@
 {
-  "atualizado_em": "2026-04-22T07:58:46.303099",
+  "atualizado_em": "2026-04-22T13:57:21.328925",
   "status": {
     "rodada_atual": 13,
     "status_mercado": 1,
@@ -29,7 +29,7 @@
       "timestamp": 1777152540
     },
     "limites_competicao": {},
-    "times_escalados": 234212,
+    "times_escalados": 242351,
     "mercado_pos_rodada": true,
     "novo_mes_ranking": false,
     "degustacao_gatomestre": false,
