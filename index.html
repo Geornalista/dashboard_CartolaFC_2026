@@ -123,6 +123,7 @@ body{
   color:var(--muted);
   cursor:pointer;
   transition:.2s;
+  font-size: 0.9rem;
 }
 
 .tabs button.active{
@@ -338,14 +339,6 @@ input[type="radio"]{
       </div>
 
       <div id="atletas-container" class="lista-container"></div>
-
-      <div id="content-escalacao">
-      <div style="background: var(--card); padding: 16px; border-radius: 14px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: var(--shadow);">
-      <h3 style="margin-top: 0;">O "11 Ideal" (4-3-3)</h3>
-      <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0;">O algoritmo calcula o <strong>Índice de Recomendação</strong> (60% média do jogador + 40% média cedida pelo adversário da próxima ronda) para selecionar os melhores nomes.</p>
-      </div>
-      <div id="escalacao-container" class="lista-container"></div>
-          
     </div>
 
     <!-- CLUBES -->
@@ -405,6 +398,16 @@ input[type="radio"]{
       </div>
 
       <div id="cedidos-container" class="lista-container"></div>
+    </div>
+
+    <!-- ESCALAÇÃO IDEAL -->
+    <div id="content-escalacao">
+      <div style="background: var(--card); padding: 16px; border-radius: 14px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: var(--shadow);">
+        <h3 style="margin-top: 0;">O "11 Ideal" (4-3-3)</h3>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0;">O algoritmo calcula o <strong>Índice de Recomendação</strong> (60% média do jogador + 40% média cedida pelo adversário da próxima rodada) para selecionar os melhores nomes.</p>
+      </div>
+      
+      <div id="escalacao-container" class="lista-container"></div>
     </div>
 
   </main>
