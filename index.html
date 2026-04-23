@@ -283,6 +283,7 @@ input[type="radio"]{
   <div class="tabs">
     <button id="tab-jogadores" class="active">Jogadores</button>
     <button id="tab-clubes">Clubes</button>
+    <button id="tab-cedidos">Cedidos</button>
   </div>
 
   <div id="loading-status"></div>
@@ -373,6 +374,30 @@ input[type="radio"]{
       <div id="clubes-container" class="lista-container"></div>
     </div>
 
+    <!-- PONTOS CEDIDOS -->
+    <div id="content-cedidos">
+
+      <div class="filtros">
+        <div class="filtro-grupo">
+          Adversário jogando como:
+          <select id="filtro-local-cedidos">
+            <option value="todos">Todos</option>
+            <option value="mandante">Mandante (em casa)</option>
+            <option value="visitante">Visitante (fora)</option>
+          </select>
+        </div>
+
+        <div class="filtro-grupo">
+          Posição Cedida:
+          <select id="filtro-posicao-cedidos">
+            <option value="todos">Todas</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="cedidos-container" class="lista-container"></div>
+    </div>
+
   </main>
 
 </div>
@@ -410,8 +435,8 @@ btn.onclick = () => {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('service-worker.js')
-        .then(reg => console.log('Service Worker registrado!', reg))
-        .catch(err => console.log('Erro ao registrar Service Worker', err));
+        .then(reg => console.log('Service Worker registado!', reg))
+        .catch(err => console.log('Erro ao registar Service Worker', err));
     });
   }
 </script>
