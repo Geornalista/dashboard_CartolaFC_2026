@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Confirmação para saber se o cache foi limpo com sucesso
+    console.log("✅ Novo app.js (com aba Cedidos) carregado com sucesso!");
+
     // --- CONFIGURAÇÕES E DADOS ---
     let ULTIMA_RODADA = 0; 
     const SCOUTS_DESCRICOES = { 'A': 'Assistência', 'CA': 'Cartão Amarelo', 'CV': 'Cartão Vermelho', 'DE': 'Defesa', 'DP': 'Defesa de Pênalti', 'DS': 'Desarme', 'FC': 'Falta Cometida', 'FD': 'Finalização Defendida', 'FF': 'Finalização pra Fora', 'FS': 'Falta Sofrida', 'FT': 'Finalização na Trave', 'G': 'Gol', 'GC': 'Gol Contra', 'GS': 'Gol Sofrido', 'I': 'Impedimento', 'PC': 'Pênalti Cometido', 'PP': 'Pênalti Perdido', 'PS': 'Pênalti Sofrido', 'SG': 'Jogo sem Sofrer Gol', 'V': 'Vitórias' };
@@ -23,9 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE INTERFACE ---
     function setupTabs() {
-        tabJogadores.addEventListener('click', () => switchTab('jogadores'));
-        tabClubes.addEventListener('click', () => switchTab('clubes'));
-        tabCedidos.addEventListener('click', () => switchTab('cedidos'));
+        if (tabJogadores) tabJogadores.addEventListener('click', () => switchTab('jogadores'));
+        if (tabClubes) tabClubes.addEventListener('click', () => switchTab('clubes'));
+        if (tabCedidos) tabCedidos.addEventListener('click', () => switchTab('cedidos'));
     }
     
     function switchTab(activeTab) {
@@ -33,34 +36,40 @@ document.addEventListener('DOMContentLoaded', () => {
         const isClubes = activeTab === 'clubes';
         const isCedidos = activeTab === 'cedidos';
 
-        tabJogadores.classList.toggle('active', isJogadores);
-        contentJogadores.classList.toggle('active', isJogadores);
+        if (tabJogadores && contentJogadores) {
+            tabJogadores.classList.toggle('active', isJogadores);
+            contentJogadores.classList.toggle('active', isJogadores);
+        }
         
-        tabClubes.classList.toggle('active', isClubes);
-        contentClubes.classList.toggle('active', isClubes);
+        if (tabClubes && contentClubes) {
+            tabClubes.classList.toggle('active', isClubes);
+            contentClubes.classList.toggle('active', isClubes);
+        }
 
-        tabCedidos.classList.toggle('active', isCedidos);
-        contentCedidos.classList.toggle('active', isCedidos);
+        if (tabCedidos && contentCedidos) {
+            tabCedidos.classList.toggle('active', isCedidos);
+            contentCedidos.classList.toggle('active', isCedidos);
+        }
 
         applyFilters();
     }
 
     // --- LÓGICA: CARREGAR O JSON PRONTO ---
     async function carregarBancoDeDados() {
-        loadingStatus.textContent = 'A carregar dados da nuvem...';
+        if (loadingStatus) loadingStatus.textContent = 'A carregar dados da nuvem...';
         
         try {
-            // Adiciona um timestamp na URL para o telemóvel não usar a versão velha
+            // Adiciona um timestamp na URL para forçar o download do arquivo JSON mais recente
             const res = await fetch(`dados_cartola.json?t=${new Date().getTime()}`);
-            if (!res.ok) throw new Error('Ficheiro de dados não encontrado.');
+            if (!res.ok) throw new Error('Arquivo de dados não encontrado.');
             
             const db = await res.json();
             
             atualizarStatusNaTela(db.status);
             todosClubes = db.clubes;
             
-            if (db.rodadas.length === 0) {
-                loadingStatus.textContent = 'O campeonato ainda não começou.';
+            if (!db.rodadas || db.rodadas.length === 0) {
+                if (loadingStatus) loadingStatus.textContent = 'O campeonato ainda não começou.';
                 return;
             }
 
@@ -68,13 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 processaDadosDaRodada(rodada.scout, rodada.partidas);
             });
 
-            loadingStatus.style.display = 'none';
+            if (loadingStatus) loadingStatus.style.display = 'none';
             populateFilters();
             switchTab('jogadores');
 
         } catch (error) {
-            console.error('Erro:', error);
-            loadingStatus.textContent = 'A aguardar a primeira atualização do banco de dados...';
+            console.error('Erro ao buscar JSON:', error);
+            if (loadingStatus) loadingStatus.textContent = 'Aguardando primeira atualização do banco de dados...';
         }
     }
 
@@ -86,13 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
         let rodada = statusData.rodada_atual || 0;
         if (statusData.status_mercado === 1) rodada -= 1;
         
-        document.getElementById('rodada-atual').textContent = rodada > 0 ? rodada : '-';
+        const rodadaAtualEl = document.getElementById('rodada-atual');
+        if (rodadaAtualEl) rodadaAtualEl.textContent = rodada > 0 ? rodada : '-';
 
         if (statusData.status_mercado === 1) {
-            elStatus.textContent = 'Aberto';
-            elStatus.style.color = '#22c55e';
-            elStatus.style.fontWeight = 'bold';
-            if (statusData.fechamento) {
+            if (elStatus) {
+                elStatus.textContent = 'Aberto';
+                elStatus.style.color = '#22c55e';
+                elStatus.style.fontWeight = 'bold';
+            }
+            if (statusData.fechamento && elDataFecha && elContainerFecha) {
                 const f = statusData.fechamento;
                 const min = f.minuto < 10 ? `0${f.minuto}` : f.minuto;
                 const mesAbrev = MESES_ABREV[f.mes - 1] || f.mes;
@@ -100,10 +112,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 elContainerFecha.style.display = 'block';
             }
         } else {
-            elStatus.textContent = 'Fechado';
-            elStatus.style.color = '#ef4444';
-            elStatus.style.fontWeight = 'bold';
-            elContainerFecha.style.display = 'none';
+            if (elStatus) {
+                elStatus.textContent = 'Fechado';
+                elStatus.style.color = '#ef4444';
+                elStatus.style.fontWeight = 'bold';
+            }
+            if (elContainerFecha) elContainerFecha.style.display = 'none';
         }
     }
 
@@ -191,33 +205,45 @@ document.addEventListener('DOMContentLoaded', () => {
               fScoutClubes = document.getElementById('filtro-scout-clubes'),
               fPosCedidos = document.getElementById('filtro-posicao-cedidos');
         
-        if(fClubeJogadores.options.length > 1) return;
+        if (fClubeJogadores && fClubeJogadores.options.length > 1) return;
 
-        Array.from(clubesParticipantes).map(id => todosClubes[id]).filter(Boolean).sort((a, b) => a.nome_fantasia.localeCompare(b.nome_fantasia)).forEach(c => fClubeJogadores.innerHTML += `<option value="${c.id}">${c.nome_fantasia}</option>`);
+        Array.from(clubesParticipantes).map(id => todosClubes[id]).filter(Boolean).sort((a, b) => a.nome_fantasia.localeCompare(b.nome_fantasia)).forEach(c => {
+            if (fClubeJogadores) fClubeJogadores.innerHTML += `<option value="${c.id}">${c.nome_fantasia}</option>`;
+        });
         
         Object.values(todasPosicoes).forEach(p => {
-            fPosJogadores.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-            fPosCedidos.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            if (fPosJogadores) fPosJogadores.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            if (fPosCedidos) fPosCedidos.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
         });
 
         const scoutOptions = Object.entries(SCOUTS_DESCRICOES).sort((a, b) => a[1].localeCompare(b[1])).map(([sigla, desc]) => `<option value="${sigla}">${desc}</option>`).join('');
-        fScoutJogadores.innerHTML += scoutOptions; 
-        fScoutClubes.innerHTML += scoutOptions;
+        if (fScoutJogadores) fScoutJogadores.innerHTML += scoutOptions; 
+        if (fScoutClubes) fScoutClubes.innerHTML += scoutOptions;
     }
 
     function applyFilters() {
-        if (tabJogadores.classList.contains('active')) { applyFiltersJogadores(); } 
-        else if (tabClubes.classList.contains('active')) { applyFiltersClubes(); }
-        else { applyFiltersCedidos(); }
+        if (tabJogadores && tabJogadores.classList.contains('active')) { applyFiltersJogadores(); } 
+        else if (tabClubes && tabClubes.classList.contains('active')) { applyFiltersClubes(); }
+        else if (tabCedidos && tabCedidos.classList.contains('active')) { applyFiltersCedidos(); }
     }
 
     function applyFiltersJogadores() {
-        const clubeId = document.getElementById('filtro-clube-jogadores').value, posId = document.getElementById('filtro-posicao-jogadores').value, local = document.getElementById('filtro-local-jogadores').value, viewMode = document.querySelector('input[name="view-mode-jogadores"]:checked').value, metricaSelecionada = document.getElementById('filtro-scout-jogadores').value;
+        const elClube = document.getElementById('filtro-clube-jogadores');
+        const elPos = document.getElementById('filtro-posicao-jogadores');
+        const elLocal = document.getElementById('filtro-local-jogadores');
+        const elViewMode = document.querySelector('input[name="view-mode-jogadores"]:checked');
+        const elMetrica = document.getElementById('filtro-scout-jogadores');
+
+        if (!elClube || !elPos || !elLocal || !elViewMode || !elMetrica) return;
+
+        const clubeId = elClube.value, posId = elPos.value, local = elLocal.value, viewMode = elViewMode.value, metricaSelecionada = elMetrica.value;
         let atletasFiltrados = Object.values(dadosAgregados);
+        
         if (clubeId !== 'todos') atletasFiltrados = atletasFiltrados.filter(a => a.clube_id == clubeId);
         if (posId !== 'todos') atletasFiltrados = atletasFiltrados.filter(a => a.posicao_id == posId);
         if (local !== 'todos') atletasFiltrados = atletasFiltrados.filter(a => a.jogos[local] > 0);
         if (viewMode === 'soma' && metricaSelecionada !== 'pontuacao') { atletasFiltrados = atletasFiltrados.filter(atleta => (atleta.scouts.total[metricaSelecionada] || 0) > 0); }
+        
         atletasFiltrados.sort((a, b) => {
             const key = (local === 'todos') ? 'total' : local;
             const jogosA = a.jogos[key] || 0, jogosB = b.jogos[key] || 0;
@@ -226,14 +252,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (viewMode === 'media') { valA = jogosA > 0 ? valA / jogosA : 0; valB = jogosB > 0 ? valB / jogosB : 0; }
             return valB - valA;
         });
-        renderAtletas(atletasFiltrados);
+        renderAtletas(atletasFiltrados, local, viewMode, metricaSelecionada);
     }
     
     function applyFiltersClubes() {
-        const local = document.getElementById('filtro-local-clubes').value, viewMode = document.querySelector('input[name="view-mode-clubes"]:checked').value, metricaSelecionada = document.getElementById('filtro-scout-clubes').value;
+        const elLocal = document.getElementById('filtro-local-clubes');
+        const elViewMode = document.querySelector('input[name="view-mode-clubes"]:checked');
+        const elMetrica = document.getElementById('filtro-scout-clubes');
+
+        if (!elLocal || !elViewMode || !elMetrica) return;
+
+        const local = elLocal.value, viewMode = elViewMode.value, metricaSelecionada = elMetrica.value;
         let clubesFiltrados = Object.values(dadosClubesAgregados);
+        
         if (local !== 'todos') clubesFiltrados = clubesFiltrados.filter(c => c.jogos[local] > 0);
         if (viewMode === 'soma' && metricaSelecionada !== 'pontuacao') { clubesFiltrados = clubesFiltrados.filter(clube => (clube.scouts.total[metricaSelecionada] || 0) > 0); }
+        
         clubesFiltrados.sort((a, b) => {
             const key = (local === 'todos') ? 'total' : local;
             const jogosA = a.jogos[key] || 0, jogosB = b.jogos[key] || 0;
@@ -242,12 +276,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (viewMode === 'media') { valA = jogosA > 0 ? valA / jogosA : 0; valB = jogosB > 0 ? valB / jogosB : 0; }
             return valB - valA;
         });
-        renderClubes(clubesFiltrados);
+        renderClubes(clubesFiltrados, local, viewMode, metricaSelecionada);
     }
 
     function applyFiltersCedidos() {
-        const local = document.getElementById('filtro-local-cedidos').value;
-        const posId = document.getElementById('filtro-posicao-cedidos').value;
+        const elLocal = document.getElementById('filtro-local-cedidos');
+        const elPosId = document.getElementById('filtro-posicao-cedidos');
+        
+        if (!elLocal || !elPosId) return;
+
+        const local = elLocal.value;
+        const posId = elPosId.value;
         
         let cedidosArray = Object.keys(dadosCedidos).map(clubeId => {
             const dados = dadosCedidos[clubeId];
@@ -274,41 +313,69 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Ordenar dos piores (maior média) para os melhores
         cedidosArray.sort((a, b) => b.media - a.media);
-        renderCedidos(cedidosArray, posId);
+        renderCedidos(cedidosArray, posId, local);
     }
 
-    function renderAtletas(atletas) { 
+    function renderAtletas(atletas, local, viewMode, metricaScout) { 
+        if (!atletasContainer) return;
         atletasContainer.innerHTML = '';
-        const local = document.getElementById('filtro-local-jogadores').value, viewMode = document.querySelector('input[name="view-mode-jogadores"]:checked').value, metricaScout = document.getElementById('filtro-scout-jogadores').value;
-        if (atletas.length === 0) { atletasContainer.innerHTML = '<p>Nenhum atleta encontrado.</p>'; return; }
+        
+        if (atletas.length === 0) { 
+            atletasContainer.innerHTML = '<p style="text-align:center; color: var(--muted); padding: 20px;">Nenhum atleta encontrado.</p>'; 
+            return; 
+        }
+
         for (const atleta of atletas) {
-            const key = (local === 'todos') ? 'total' : local; const jogos = atleta.jogos[key]; if (!jogos && local !== 'todos') continue;
+            const key = (local === 'todos') ? 'total' : local; 
+            const jogos = atleta.jogos[key]; 
+            if (!jogos && local !== 'todos') continue;
+            
             let valor, rotulo;
-            if (metricaScout === 'pontuacao') { rotulo = 'Pontuação'; valor = atleta.pontuacao[key]; } else { rotulo = SCOUTS_DESCRICOES[metricaScout] || metricaScout; valor = atleta.scouts[key][metricaScout] || 0; }
+            if (metricaScout === 'pontuacao') { 
+                rotulo = 'Pontuação'; 
+                valor = atleta.pontuacao[key]; 
+            } else { 
+                rotulo = SCOUTS_DESCRICOES[metricaScout] || metricaScout; 
+                valor = atleta.scouts[key][metricaScout] || 0; 
+            }
+            
             const valorCalculado = (viewMode === 'media' && jogos > 0) ? (valor / jogos) : valor;
-            let valorDisplay;
-            if (viewMode === 'media' || metricaScout === 'pontuacao') { valorDisplay = valorCalculado.toFixed(2); } else { valorDisplay = valorCalculado.toFixed(0); }
+            let valorDisplay = (viewMode === 'media' || metricaScout === 'pontuacao') ? valorCalculado.toFixed(2) : valorCalculado.toFixed(0);
+            
             let subtexto = viewMode === 'media' ? `Média em ${jogos} jogos` : `Total em ${jogos} jogos`;
             if (local !== 'todos') subtexto += ` (${local})`;
-            const itemDiv = document.createElement('div'); itemDiv.className = 'item-lista';
+            
+            const itemDiv = document.createElement('div'); 
+            itemDiv.className = 'item-lista';
             itemDiv.innerHTML = `<img src="${atleta.foto ? atleta.foto.replace('FORMATO', '140x140') : ''}" alt="Foto" style="border-radius:50%"><div class="info"><h3>${atleta.apelido}</h3><p>${todosClubes[atleta.clube_id]?.nome_fantasia || ''} • ${todasPosicoes[atleta.posicao_id]?.nome || ''}</p></div><div class="metrica"><span class="metrica-label">${rotulo}</span><span class="metrica-valor">${valorDisplay}</span><span class="metrica-subtext">${subtexto}</span></div>`;
             atletasContainer.appendChild(itemDiv);
         }
     }
     
-    function renderClubes(clubes) {
+    function renderClubes(clubes, local, viewMode, metricaScout) {
+        if (!clubesContainer) return;
         clubesContainer.innerHTML = '';
-        const local = document.getElementById('filtro-local-clubes').value, viewMode = document.querySelector('input[name="view-mode-clubes"]:checked').value, metricaScout = document.getElementById('filtro-scout-clubes').value;
-        if (clubes.length === 0) { clubesContainer.innerHTML = '<p>Nenhum clube encontrado.</p>'; return; }
+        
+        if (clubes.length === 0) { 
+            clubesContainer.innerHTML = '<p style="text-align:center; color: var(--muted); padding: 20px;">Nenhum clube encontrado.</p>'; 
+            return; 
+        }
+
         for (const clube of clubes) {
             const key = (local === 'todos') ? 'total' : local;
             const jogos = clube.jogos[key];
             let valor, rotulo;
-            if (metricaScout === 'pontuacao') { rotulo = 'Pontuação'; valor = clube.pontuacao[key]; } else { rotulo = SCOUTS_DESCRICOES[metricaScout] || metricaScout; valor = clube.scouts[key][metricaScout] || 0; }
+            
+            if (metricaScout === 'pontuacao') { 
+                rotulo = 'Pontuação'; 
+                valor = clube.pontuacao[key]; 
+            } else { 
+                rotulo = SCOUTS_DESCRICOES[metricaScout] || metricaScout; 
+                valor = clube.scouts[key][metricaScout] || 0; 
+            }
             
             const valorCalculado = (viewMode === 'media' && jogos > 0) ? (valor / jogos) : valor;
-            let valorDisplay;
-            if (viewMode === 'media' || metricaScout === 'pontuacao') { valorDisplay = valorCalculado.toFixed(2); } else { valorDisplay = valorCalculado.toFixed(0); }
+            let valorDisplay = (viewMode === 'media' || metricaScout === 'pontuacao') ? valorCalculado.toFixed(2) : valorCalculado.toFixed(0);
 
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item-lista';
@@ -317,11 +384,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderCedidos(lista, posId) {
+    function renderCedidos(lista, posId, local) {
+        if (!cedidosContainer) return;
         cedidosContainer.innerHTML = '';
-        const local = document.getElementById('filtro-local-cedidos').value;
         
-        if (lista.length === 0) { cedidosContainer.innerHTML = '<p>Nenhum dado encontrado.</p>'; return; }
+        if (lista.length === 0) { 
+            cedidosContainer.innerHTML = '<p style="text-align:center; color: var(--muted); padding: 20px;">Nenhum dado encontrado. As rodadas ainda não ocorreram ou os dados estão vazios.</p>'; 
+            return; 
+        }
         
         let labelPosicao = posId === 'todos' ? 'Média Cedida (Geral)' : `Média Cedida p/ ${todasPosicoes[posId].nome}`;
         
