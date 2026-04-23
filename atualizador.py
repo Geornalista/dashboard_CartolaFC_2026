@@ -10,6 +10,7 @@ HEADERS = {
 
 API_URLS = {
     'STATUS': 'https://api.cartola.globo.com/mercado/status',
+    'MERCADO': 'https://api.cartola.globo.com/atletas/mercado', # <--- NOVIDADE PARA PEGAR PREÇO E STATUS
     'PONTUADOS': 'https://api.cartola.globo.com/atletas/pontuados/',
     'PARTIDAS': 'https://api.cartola.globo.com/partidas/',
     'CLUBES': 'https://api.cartola.globo.com/clubes'
@@ -17,7 +18,7 @@ API_URLS = {
 
 def main():
     print(f"[{datetime.now()}] Iniciando atualização dos dados do Cartola...")
-    banco_de_dados = {'atualizado_em': datetime.now().isoformat(), 'status': {}, 'clubes': {}, 'rodadas': [], 'proxima_rodada_partidas': []}
+    banco_de_dados = {'atualizado_em': datetime.now().isoformat(), 'status': {}, 'clubes': {}, 'rodadas': [], 'proxima_rodada_partidas': [], 'mercado': {}}
 
     try:
         resp_status = requests.get(API_URLS['STATUS'], headers=HEADERS)
@@ -28,6 +29,11 @@ def main():
         ultima_rodada = status_data.get('rodada_atual', 0)
         if status_data.get('status_mercado') == 1:
             ultima_rodada -= 1
+
+        print("A procurar informações do Mercado atual (Preços e Status)...")
+        resp_mercado = requests.get(API_URLS['MERCADO'], headers=HEADERS)
+        if resp_mercado.status_code == 200:
+            banco_de_dados['mercado'] = resp_mercado.json()
 
         print("A procurar clubes...")
         resp_clubes = requests.get(API_URLS['CLUBES'], headers=HEADERS)
@@ -42,7 +48,6 @@ def main():
                 scouts = resp_pont.json() if resp_pont.status_code == 200 else {}
                 banco_de_dados['rodadas'].append({'rodada': r, 'partidas': partidas.get('partidas', []), 'scout': scouts})
 
-        # --- NOVIDADE: Buscar jogos da próxima rodada ---
         proxima_rodada = ultima_rodada + 1
         print(f"A procurar partidas da próxima rodada ({proxima_rodada})...")
         resp_prox = requests.get(f"{API_URLS['PARTIDAS']}{proxima_rodada}", headers=HEADERS)
