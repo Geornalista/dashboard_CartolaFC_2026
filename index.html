@@ -284,6 +284,7 @@ input[type="radio"]{
     <button id="tab-jogadores" class="active">Jogadores</button>
     <button id="tab-clubes">Clubes</button>
     <button id="tab-cedidos">Cedidos</button>
+    <button id="tab-escalacao">Escalação</button>
   </div>
 
   <div id="loading-status"></div>
@@ -337,6 +338,14 @@ input[type="radio"]{
       </div>
 
       <div id="atletas-container" class="lista-container"></div>
+
+      <div id="content-escalacao">
+      <div style="background: var(--card); padding: 16px; border-radius: 14px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: var(--shadow);">
+      <h3 style="margin-top: 0;">O "11 Ideal" (4-3-3)</h3>
+      <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0;">O algoritmo calcula o <strong>Índice de Recomendação</strong> (60% média do jogador + 40% média cedida pelo adversário da próxima ronda) para selecionar os melhores nomes.</p>
+      </div>
+      <div id="escalacao-container" class="lista-container"></div>
+          
     </div>
 
     <!-- CLUBES -->
